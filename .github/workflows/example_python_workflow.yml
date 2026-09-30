@@ -1,0 +1,63 @@
+name: Example CI Python Pipeline
+
+# --------------------------------------------------
+# TRIGGERS
+# --------------------------------------------------
+
+on:
+  push:
+    branches: [main, dev]
+
+  pull_request:
+    branches: [main, dev]
+
+
+# --------------------------------------------------
+# JOBS
+# --------------------------------------------------
+
+jobs:
+
+  # Build and test the application
+  build_and_test:
+    name: Run Python Tests
+    runs-on: ubuntu-latest
+
+    steps:
+      # Download repository code
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      # Install Python
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      # Install dependencies
+      - name: Install Dependencies
+        run: pip install -r requirements.txt
+
+      # Run Python tests
+      - name: Run Tests
+        run: python -m pytest -v
+
+
+  # --------------------------------------------------
+  # BUILD / DEPLOY
+  # --------------------------------------------------
+
+  deploy:
+    name: Build Our App
+    needs: build_and_test
+    runs-on: ubuntu-latest
+    environment: production
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Build Application
+        run: |
+          chmod +x build.sh
+          ./build.sh

@@ -1,0 +1,30 @@
+# fast-forward -> Moving "branch" forawrd no merge commit needed 
+# merge commit -> join two histories together
+# Close PR -> close and don't pull any changes
+# squash -> combine the "features" commit into a single commit 
+# base is the destination, head is the source 
+
+How do we do PRs via cli:
+
+gh pr create --base main --head develop # the same as the gui, but in the terminal 
+gh pr merge 
+git log --oneline --graph --all # useful log viewer
+git fetch && git log --oneline origin/main.. # look before we pull request 
+
+git tag v1.0 # light weight tag, just a name on commit 
+git tag -a v1.5 -m "Version 1.5" # -a annotated, -m message 
+git show v1.5 -> commit hash, history, etc 
+git log -> jashb2144akf 
+git checkout v1.5 -> same git checkout "head of my branch" main, detaching head because the tag is not a part of the branch, 
+so there is now nowhere to move from here (cannot move forward)
+if you need to (ref) work from a tag, make the head there 
+
+git push --allow-unrelated-histories
+
+git reset, commit history, staging area, working files:
+
+--soft ->  reset            keep            keep
+
+--mixed -> reset            reset           keep 
+
+--hard ->  reset            reset           reset 

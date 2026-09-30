@@ -1,0 +1,70 @@
+name: Example C# CI Pipeline
+
+# --------------------------------------------------
+# TRIGGERS
+# --------------------------------------------------
+
+on:
+  push:
+    branches: [main, dev]
+
+  pull_request:
+    branches: [main, dev]
+
+
+# --------------------------------------------------
+# JOBS
+# --------------------------------------------------
+
+jobs:
+
+  # Build and test the application
+  build_and_test:
+    name: Build and Test C# App
+    runs-on: ubuntu-latest
+
+    steps:
+      # Download repository code
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      # Install .NET
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+
+      # Restore NuGet packages
+      - name: Restore Dependencies
+        run: dotnet restore
+
+      # Build the application
+      - name: Build Application
+        run: dotnet build --no-restore
+
+      # Run tests
+      - name: Run Tests
+        run: dotnet test --no-build --verbosity normal
+
+
+  # --------------------------------------------------
+  # DEPLOY
+  # --------------------------------------------------
+
+  deploy:
+    name: Deploy Our App
+    needs: build_and_test
+    runs-on: ubuntu-latest
+    environment: production
+
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+
+      - name: Publish Application
+        run: dotnet publish -c Release -o ./publish

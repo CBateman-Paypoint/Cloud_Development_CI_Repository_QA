@@ -1,0 +1,21 @@
+# Build output
+bin/
+obj/
+publish/
+
+# Test and coverage output
+[Tt]est[Rr]esults/
+*.trx
+*.coverage
+*.coverlet.json
+
+# IDE / editor
+.vs/
+.vscode/
+.idea/
+*.user
+*.suo
+
+# OS noise
+Thumbs.db
+.DS_Store

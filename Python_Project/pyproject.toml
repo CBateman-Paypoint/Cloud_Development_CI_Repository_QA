@@ -1,0 +1,25 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "bank-account"
+version = "1.0.0"
+description = "Teaching demo: Python project layout, naming conventions, and unittest vs pytest."
+readme = "README.md"
+requires-python = ">=3.9"
+dependencies = []
+
+[project.optional-dependencies]
+test = ["pytest>=8.0"]
+
+# src layout: tell setuptools the packages live under src/, not at the root.
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+# pytest looks only in tests/. Nothing under src/ is a test, so do not scan it.
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]

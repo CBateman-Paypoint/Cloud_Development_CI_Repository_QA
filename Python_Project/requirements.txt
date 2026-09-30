@@ -1,0 +1,8 @@
+# Test runner.
+pytest>=8.0
+
+# Install THIS project in editable mode, reading pyproject.toml.
+# Because of the src layout, `import bank_account` only works once the package
+# is installed - which is exactly the point. This single line means
+# `pip install -r requirements.txt` is enough to make both test commands pass.
+-e .

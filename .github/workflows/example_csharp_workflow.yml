@@ -3,13 +3,23 @@ name: Example C# CI Pipeline
 # --------------------------------------------------
 # TRIGGERS
 # --------------------------------------------------
+# The repository root holds TWO projects, so a change to the Python one should
+# not rebuild this. The "paths" filter is what stops that: the workflow only
+# runs when something under Csharp_Project changes, or when this file itself
+# changes (you always want the pipeline to run after you have edited it).
 
 on:
   push:
     branches: [main, dev]
+    paths:
+      - "Csharp_Project/**"
+      - ".github/workflows/example_csharp_workflow.yml"
 
   pull_request:
     branches: [main, dev]
+    paths:
+      - "Csharp_Project/**"
+      - ".github/workflows/example_csharp_workflow.yml"
 
 
 # --------------------------------------------------
@@ -23,6 +33,18 @@ jobs:
     name: Build and Test C# App
     runs-on: ubuntu-latest
 
+    # The checkout lands the WHOLE repository on the runner, so the working
+    # directory is the repo root and "dotnet restore" would find no project.
+    # "defaults.run.working-directory" moves every run step in this job into
+    # the project folder, so the commands below stay exactly as they would be
+    # if you were sitting in that folder yourself.
+    #
+    # It applies to "run" steps only. "uses" steps such as checkout and
+    # setup-dotnet are unaffected, which is what you want.
+    defaults:
+      run:
+        working-directory: Csharp_Project
+
     steps:
       # Download repository code
       - name: Checkout Repository
@@ -33,6 +55,9 @@ jobs:
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: "8.0.x"
+          # Matches <TargetFramework>net8.0</TargetFramework> in the csproj.
+          # If you bump one, bump the other, or the build fails on the runner
+          # while still working on your machine.
 
       # Restore NuGet packages
       - name: Restore Dependencies
@@ -41,10 +66,18 @@ jobs:
       # Build the application
       - name: Build Application
         run: dotnet build --no-restore
+        # --no-restore because the step above already did it. Without it the
+        # build restores a second time, which is just wasted minutes.
 
       # Run tests
       - name: Run Tests
         run: dotnet test --no-build --verbosity normal
+        # --no-build reuses what the previous step produced. It also means a
+        # compile error shows up as a BUILD failure rather than a confusing
+        # test failure.
+        #
+        # VERIFIED LOCALLY:
+        #   Passed!  -  Failed: 0, Passed: 15, Skipped: 0, Total: 15
 
 
   # --------------------------------------------------
@@ -54,12 +87,22 @@ jobs:
   deploy:
     name: Deploy Our App
     needs: build_and_test
+    # ^ deploy waits for build_and_test AND is skipped entirely if it fails.
+    #   Without this line the two jobs would run at the same time on two
+    #   different machines, and a broken build would still deploy.
+
     runs-on: ubuntu-latest
     environment: production
+
+    defaults:
+      run:
+        working-directory: Csharp_Project
 
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
+        # Yes, again. This is a different job, so it is a different machine
+        # with a different empty folder. Nothing carries over between jobs.
 
       - name: Setup .NET
         uses: actions/setup-dotnet@v4
@@ -67,4 +110,14 @@ jobs:
           dotnet-version: "8.0.x"
 
       - name: Publish Application
-        run: dotnet publish -c Release -o ./publish
+        run: dotnet publish src/BankAccount/BankAccount.csproj -c Release -o ./publish
+        # NOTE: this names the PROJECT, not the solution, and that is deliberate.
+        #
+        # "dotnet publish -c Release -o ./publish" with no project argument
+        # publishes the whole solution, which does two unhelpful things:
+        #   1. it warns  NETSDK1194: the --output option isn't supported when
+        #      building a solution
+        #   2. it copies the TEST assembly into your deployment output
+        #
+        # You deploy one application, so name it. The test project also sets
+        # <IsPublishable>false</IsPublishable> as a second line of defence.

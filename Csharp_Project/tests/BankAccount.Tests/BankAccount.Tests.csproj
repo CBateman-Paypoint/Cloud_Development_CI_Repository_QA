@@ -1,0 +1,37 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <RootNamespace>BankAccount.Tests</RootNamespace>
+    <AssemblyName>BankAccount.Tests</AssemblyName>
+    <!-- A test project is never shipped as a NuGet package, and never deployed.
+         IsPublishable=false keeps the test assembly out of "dotnet publish" output;
+         without it the CI's solution-level publish copies the tests into ./publish. -->
+    <IsPackable>false</IsPackable>
+    <IsPublishable>false</IsPublishable>
+    <IsTestProject>true</IsTestProject>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- The test host that "dotnet test" drives. -->
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.12.0" />
+    <!-- NUnit itself: the attributes and the Assert API. -->
+    <PackageReference Include="NUnit" Version="4.6.1" />
+    <!-- The bridge that lets the VSTest-based "dotnet test" discover NUnit tests. -->
+    <PackageReference Include="NUnit3TestAdapter" Version="5.2.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- The reference points tests -> src, and never the other way round.
+         Production code must not know that tests exist. -->
+    <ProjectReference Include="..\..\src\BankAccount\BankAccount.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <!-- Saves a "using NUnit.Framework;" at the top of every test file. -->
+    <Using Include="NUnit.Framework" />
+  </ItemGroup>
+
+</Project>

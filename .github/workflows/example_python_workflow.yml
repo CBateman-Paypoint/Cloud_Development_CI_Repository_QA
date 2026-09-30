@@ -3,13 +3,23 @@ name: Example CI Python Pipeline
 # --------------------------------------------------
 # TRIGGERS
 # --------------------------------------------------
+# The repository root holds TWO projects, so a change to the C# one should not
+# rebuild this. The "paths" filter is what stops that: the workflow only runs
+# when something under Python_Project changes, or when this file itself
+# changes (you always want the pipeline to run after you have edited it).
 
 on:
   push:
     branches: [main, dev]
+    paths:
+      - "Python_Project/**"
+      - ".github/workflows/example_python_workflow.yml"
 
   pull_request:
     branches: [main, dev]
+    paths:
+      - "Python_Project/**"
+      - ".github/workflows/example_python_workflow.yml"
 
 
 # --------------------------------------------------
@@ -22,6 +32,18 @@ jobs:
   build_and_test:
     name: Run Python Tests
     runs-on: ubuntu-latest
+
+    # The checkout lands the WHOLE repository on the runner, so the working
+    # directory is the repo root and "pip install -r requirements.txt" would
+    # find no file. "defaults.run.working-directory" moves every run step in
+    # this job into the project folder, so the commands below stay exactly as
+    # they would be if you were sitting in that folder yourself.
+    #
+    # It applies to "run" steps only. "uses" steps such as checkout and
+    # setup-python are unaffected, which is what you want.
+    defaults:
+      run:
+        working-directory: Python_Project
 
     steps:
       # Download repository code
@@ -37,10 +59,26 @@ jobs:
       # Install dependencies
       - name: Install Dependencies
         run: pip install -r requirements.txt
+        # requirements.txt contains "-e ." which installs THIS project in
+        # editable mode. That single line is what puts src/bank_account on the
+        # import path, so no PYTHONPATH juggling is needed anywhere else.
 
       # Run Python tests
-      - name: Run Tests
+      - name: Run Pytest Tests
         run: python -m pytest -v
+        # VERIFIED LOCALLY:  35 passed
+
+      - name: Run Unittest Tests
+        run: python -m unittest discover -v
+        # VERIFIED LOCALLY:  Ran 15 tests ... OK
+        #
+        # The counts differ ON PURPOSE and it is not a bug. pytest collects
+        # unittest.TestCase classes as well as its own plain test functions,
+        # so it runs BOTH files. unittest only understands TestCase, so it
+        # runs only the unittest file and ignores the pytest one.
+        #
+        # Collection goes one way: pytest can run unittest tests, unittest
+        # cannot run pytest tests.
 
 
   # --------------------------------------------------
@@ -50,14 +88,40 @@ jobs:
   deploy:
     name: Build Our App
     needs: build_and_test
+    # ^ deploy waits for build_and_test AND is skipped entirely if it fails.
+    #   Without this line the two jobs would run at the same time on two
+    #   different machines, and a broken build would still deploy.
+
     runs-on: ubuntu-latest
     environment: production
+
+    defaults:
+      run:
+        working-directory: Python_Project
 
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
+        # Yes, again. This is a different job, so it is a different machine
+        # with a different empty folder. Nothing carries over between jobs.
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+        # The first job installed Python on ITS runner. This one is a fresh
+        # machine, so it needs its own. Forgetting this is a common cause of
+        # "works in the test job, fails in the deploy job".
+
+      - name: Install Dependencies
+        run: pip install -r requirements.txt
+        # build.sh imports the package, so it has to be installed here too.
 
       - name: Build Application
         run: |
           chmod +x build.sh
           ./build.sh
+        # chmod because a file committed from Windows often arrives without
+        # the executable bit, and the runner then reports "Permission denied".
+        # Committing the bit with "git update-index --chmod=+x build.sh" is the
+        # tidier fix; this line works regardless and is safe to keep.

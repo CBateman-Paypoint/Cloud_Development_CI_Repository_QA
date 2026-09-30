@@ -1,0 +1,14 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <!-- net8.0 because the CI workflow beside this project pins dotnet-version 8.0.x. -->
+    <TargetFramework>net8.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <!-- RootNamespace is the default namespace for new files. It matches the project
+         folder name, which is also the assembly name and the .sln entry name. -->
+    <RootNamespace>BankAccount</RootNamespace>
+    <AssemblyName>BankAccount</AssemblyName>
+  </PropertyGroup>
+
+</Project>

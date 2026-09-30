@@ -1,4 +1,4 @@
-# BankAccount — a reference C# solution layout with NUnit
+# BankAccount - a reference C# solution layout with NUnit
 
 Trainer demo material. The point of this project is **not** the banking logic, which is
 deliberately trivial. The point is what a properly laid out C# solution with a test
@@ -57,7 +57,7 @@ Csharp_Project/
 
 The arrow points **tests → src, and never the reverse.** Production code must not know
 that tests exist. If you ever find yourself wanting `src` to reference `tests`, something
-has gone wrong in the design — usually a test helper that actually belongs in the
+has gone wrong in the design - usually a test helper that actually belongs in the
 library, or a piece of production code that only exists to make a test pass.
 
 The path is **relative**, so the solution works on any machine and on the CI runner
@@ -75,13 +75,13 @@ Getting these right is half the exercise. Every one of them is applied in this p
 | Class | `PascalCase` | `Account`, `SavingsAccount` |
 | Method | `PascalCase` | `Deposit`, `ApplyInterest` |
 | Property | `PascalCase` | `Balance`, `InterestRate` |
-| Public field | `PascalCase` | *(none here — prefer a property)* |
+| Public field | `PascalCase` | *(none here - prefer a property)* |
 | Enum member | `PascalCase` | *(none here)* |
 | Constant | `PascalCase` | `OpeningBalance` in the tests |
 | **Private instance field** | **`_camelCase`** (leading underscore) | `_balance`, `_interestRate` |
 | Parameter | `camelCase` | `amount`, `accountHolder` |
 | Local variable | `camelCase` | `interest`, `emptyAccount` |
-| Interface | `PascalCase`, **`I`-prefixed** | *(none here — see below)* |
+| Interface | `PascalCase`, **`I`-prefixed** | *(none here - see below)* |
 | File name | `PascalCase`, matches the type | `SavingsAccount.cs` holds `SavingsAccount` |
 
 Points worth saying out loud:
@@ -92,15 +92,15 @@ Points worth saying out loud:
   bugs come from. This is Microsoft's own convention and the .NET runtime repo uses it
   throughout.
 * **One public type per file, and the file is named after it.** `Account.cs` contains
-  `Account` and nothing else. C# does not force this — the compiler is perfectly happy
-  with five classes in one file — but every .NET codebase you will work in expects it,
+  `Account` and nothing else. C# does not force this - the compiler is perfectly happy
+  with five classes in one file - but every .NET codebase you will work in expects it,
   and tooling like "go to file" depends on it.
 * **The namespace matches the folder path.** `src/BankAccount/Account.cs` declares
   `namespace BankAccount;`. Add a `src/BankAccount/Interest/` folder and its files
   declare `namespace BankAccount.Interest;`. The `<RootNamespace>` in the `.csproj` sets
   the base; folders extend it.
 * **Interfaces are `I`-prefixed**: `IAccountStore`, `IInterestCalculator`. There is no
-  interface in this project, on purpose — the brief is a naming and structure demo, not
+  interface in this project, on purpose - the brief is a naming and structure demo, not
   an architecture demo, and adding a repository or a service layer here would teach
   ceremony rather than convention. The prefix rule is listed because you will meet it
   immediately in real code, and because it is one of the few places .NET deliberately
@@ -135,19 +135,19 @@ consistent within a codebase.
 
 Four types, chosen to cover four ideas with no sprawl:
 
-* **`Account`** — **encapsulation.** `_balance` is a private field. `Balance` is a
+* **`Account`** - **encapsulation.** `_balance` is a private field. `Balance` is a
   read-only property with no setter. The only way to change the balance from outside is
   `Deposit` or `Withdraw`, which enforce the rules. You cannot put the object into an
   invalid state.
-* **`SavingsAccount : Account`** — **inheritance.** It keeps every rule it inherits and
+* **`SavingsAccount : Account`** - **inheritance.** It keeps every rule it inherits and
   adds `ApplyInterest`. Note that `ApplyInterest` calls the inherited `Deposit` rather
   than touching the balance: the private field is invisible even to a derived class, so
   the deposit rules stay in exactly one place.
-* **`Account.Describe()` is `virtual`, `SavingsAccount.Describe()` is `override`** —
+* **`Account.Describe()` is `virtual`, `SavingsAccount.Describe()` is `override`** -
   **polymorphism.** `SavingsAccountTests.Describe_CalledThroughBaseType_UsesTheOverride`
   holds a `SavingsAccount` in an `Account`-typed variable and shows the derived version
   running.
-* **`InsufficientFundsException`** — a **domain exception.** Callers can catch exactly
+* **`InsufficientFundsException`** - a **domain exception.** Callers can catch exactly
   this failure instead of catching something generic and guessing at the cause. It
   carries the requested amount and the available balance so the caller can react, not
   just log.
@@ -201,7 +201,7 @@ Total tests: 15
 |---|---|
 | `[TestFixture]` | Marks a class as a container of tests. Optional in modern NUnit for a simple non-generic class, but written here because being explicit is clearer for a reader. |
 | `[SetUp]` | Runs before **every** test in the fixture. Where you build fresh state. |
-| `[TearDown]` | Runs after every test. For releasing things — not used here, nothing needs releasing. |
+| `[TearDown]` | Runs after every test. For releasing things - not used here, nothing needs releasing. |
 | `[Test]` | Marks a single test method. |
 | `[TestCase(...)]` | Runs the same test body once per argument set, each reported as its own named test. Use it instead of a loop inside one test, so a failing case is named in the output rather than hidden behind the first failure. |
 
@@ -223,7 +223,7 @@ value comes **first**, the opposite way round from the constraint model. Use
 
 One practical wrinkle shown in the test files: NUnit 4.6 has several `Assert.That`
 overloads that accept a delegate, so passing a bare lambda directly is ambiguous and
-fails to compile. Assigning it to an `Action` local first resolves it — and gives the
+fails to compile. Assigning it to an `Action` local first resolves it - and gives the
 "act" step of arrange/act/assert a name, which reads better anyway. (`TestDelegate`, the
 type older examples use here, is deprecated in 4.6 in favour of `Action`.)
 
@@ -258,7 +258,7 @@ public void SetUp()
 `[SetUp]` runs before each test, so every test gets a clean object. Both test files here
 follow this and comment on it.
 
-(`= null!` is not part of the pattern — it only tells the nullable-reference analyser
+(`= null!` is not part of the pattern - it only tells the nullable-reference analyser
 that `[SetUp]` will assign the field before anything reads it.)
 
 ---
@@ -269,7 +269,7 @@ that `[SetUp]` will assign the field before anything reads it.)
 it is generated, machine-specific, and large. The CI runner produces it from source on
 every run, which is the whole point of having a build pipeline.
 
-The checked-in tree is source only — `.cs`, `.csproj`, `.sln`, `global.json`, and this
+The checked-in tree is source only - `.cs`, `.csproj`, `.sln`, `global.json`, and this
 file.
 
 ### One known CI warning
